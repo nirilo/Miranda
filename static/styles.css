@@ -121,6 +121,8 @@ h1,.display{font-family:"Playfair Display", Georgia, serif; letter-spacing:.2px;
 .nav-row{display:flex; align-items:center; justify-content:space-between; padding:.85rem 0;}
 .brand{font-weight:800; letter-spacing:.4px; text-decoration:none; color:var(--ink); font-size:1.05rem;}
 .brand i{font-style:normal; letter-spacing:0; font-weight:400;}
+.brand-logo{height:70px; width:auto; display:block;}
+
 .links a{margin-left:1rem; text-decoration:none; color:var(--ink); font-weight:700;}
 .links a:hover{color:var(--accent);}
 .lang-toggle{
