@@ -256,7 +256,7 @@ function normalizePayload(data) {
   return {
     score,
     stage: score,
-    label: data.label || fallbackLabel || "Rated",
+    label: fallbackLabel || "Rated",
     confidence: Number.isFinite(conf) ? conf : 0,
     confidence_label: data.confidence_label || confidenceLabel(conf),
     issues,
