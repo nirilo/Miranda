@@ -1,3 +1,4 @@
+(function () {
 const galleryItems = [
   {
     before: "assets/images/denim_before.webp",
@@ -182,6 +183,12 @@ let thumbButtons = [];
 let beforeImg, afterImg, titleEl, noteEl, beforeLabelEl, afterLabelEl;
 let fileNoteEl;
 let fileInputEl;
+
+function getPageType() {
+  const body = document.body;
+  if (!body) return "home";
+  return body.dataset.page || "home";
+}
 
 function setText(id, text, asHtml = false) {
   const el = document.getElementById(id);
@@ -496,6 +503,11 @@ function initMobileMenu() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  const pageType = getPageType();
+  if (pageType === "condition") {
+    initMobileMenu();
+    return;
+  }
   initGallery();
   initContactForm();
   setYear();
@@ -503,3 +515,5 @@ document.addEventListener("DOMContentLoaded", () => {
   initLangToggle();
   initMobileMenu();
 });
+
+})();
