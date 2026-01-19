@@ -14,7 +14,15 @@
 <body>
   <header class="nav">
     <div class="container nav-row">
-      <a class="brand" href="#hero"><img class="brand-logo" src="assets/logo/thereallogo.svg" alt="Miranda's"></a>
+      <a class="brand" href="index.html#hero">
+        <picture>
+          <source media="(max-width: 767.98px)" srcset="assets/logo/mobile_logo.svg">
+          <img class="brand-logo" src="assets/logo/procre_logo.svg" alt="Miranda's">
+        </picture>
+      </a>
+      <button class="menu-toggle" type="button" id="menu-toggle" aria-label="Open menu" aria-controls="mobile-menu" aria-expanded="false">
+          <span class="menu-icon" aria-hidden="true"></span>
+      </button>
       <nav class="links" aria-label="Primary">
         <a id="nav-home" href="index.html#hero">Home</a>
         <a id="nav-about" href="index.html#about">About</a>
@@ -25,6 +33,17 @@
       <button class="lang-toggle" type="button" id="lang-toggle" aria-label="Switch language">GR</button>
     </div>
   </header>
+  <div class="menu-overlay" id="menu-overlay" hidden></div>
+  <div class="mobile-menu" id="mobile-menu" hidden role="dialog" aria-modal="true" aria-label="Menu">
+    <nav aria-label="Mobile Primary">
+      <a id="mobile-nav-home" href="index.html#hero">Home</a>
+      <a id="mobile-nav-about" href="index.html#about">About</a>
+      <a id="mobile-nav-work" href="index.html#work">Work</a>
+      <a id="mobile-nav-contact" href="index.html#contact">Contact</a>
+      <a id="mobile-nav-condition" href="condition.html" aria-current="page">Condition Rater</a>
+      <button class="lang-toggle mobile-lang-toggle" type="button" id="mobile-lang-toggle" aria-label="Switch language">GR</button>
+    </nav>
+  </div>
 
   <main>
     <section class="hero hero-compact">

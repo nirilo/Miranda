@@ -80,7 +80,7 @@ const specTranslations = {
     contactEmail: "<strong>Email:</strong> contact@mirandas.gr",
     contactAddress: "<strong>Address:</strong> Avlonos, Athens",
     backTop: "Back to top",
-    formTitle: "Book a fitting 🎔",
+    formTitle: "Book a fitting ❤",
     labelName: "Name",
     labelEmail: "Email",
     labelDetails: "What do you need?",
@@ -154,7 +154,7 @@ const specTranslations = {
     contactEmail: "<strong>Email:</strong> contact@mirandas.gr",
     contactAddress: "<strong>Διεύθυνση:</strong> Αυλώνος, Αθήνα",
     backTop: "Επιστροφή στην αρχή",
-    formTitle: "Κλείστε ραντεβού, αμέ! 🎔",
+    formTitle: "Κλείστε ραντεβού, αμέ! ❤",
     labelName: "Όνομα, Επώνυμο",
     labelEmail: "Email",
     labelDetails: "Τι χρειάζεστε;",
@@ -331,9 +331,16 @@ function applyTranslations(lang) {
   setText("nav-work", t.nav.work);
   setText("nav-contact", t.nav.contact);
   setText("nav-condition", t.nav.condition);
+   setText("mobile-nav-home", t.nav.home);
+   setText("mobile-nav-about", t.nav.about);
+   setText("mobile-nav-work", t.nav.work);
+   setText("mobile-nav-contact", t.nav.contact);
+   setText("mobile-nav-condition", t.nav.condition);
 
   const toggleBtn = document.getElementById("lang-toggle");
   if (toggleBtn) toggleBtn.textContent = t.nav.toggle;
+  const mobileToggleBtn = document.getElementById("mobile-lang-toggle");
+  if (mobileToggleBtn) mobileToggleBtn.textContent = t.nav.toggle;
 
   setText("hero-tag", t.heroTag);
   setText("hero-lead", t.heroLead, true);
@@ -415,10 +422,76 @@ function setYear() {
 }
 
 function initLangToggle() {
-  const toggleBtn = document.getElementById("lang-toggle");
-  if (!toggleBtn) return;
-  toggleBtn.addEventListener("click", () => {
-    setLanguage(currentLang === "en" ? "el" : "en");
+  const toggles = Array.from(document.querySelectorAll("#lang-toggle, #mobile-lang-toggle"));
+  if (!toggles.length) return;
+  toggles.forEach(btn => {
+    btn.addEventListener("click", () => {
+      setLanguage(currentLang === "en" ? "el" : "en");
+    });
+  });
+}
+
+function initMobileMenu() {
+  const menuToggle = document.getElementById("menu-toggle");
+  const overlay = document.getElementById("menu-overlay");
+  const menu = document.getElementById("mobile-menu");
+  if (!menuToggle || !overlay || !menu) return;
+
+  const focusableSelector = "a, button";
+  const getFocusable = () =>
+    Array.from(menu.querySelectorAll(focusableSelector)).filter((el) => !el.disabled);
+
+  const setState = (isOpen, returnFocus = true) => {
+    document.body.classList.toggle("menu-open", isOpen);
+    overlay.hidden = !isOpen;
+    menu.hidden = !isOpen;
+    menuToggle.setAttribute("aria-expanded", String(isOpen));
+    if (isOpen) {
+      const first = getFocusable()[0];
+      if (first) first.focus();
+    } else if (returnFocus) {
+      menuToggle.focus();
+    }
+  };
+
+  const trapFocus = (evt) => {
+    if (!document.body.classList.contains("menu-open") || evt.key !== "Tab") return;
+    const focusable = getFocusable();
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (evt.shiftKey && document.activeElement === first) {
+      evt.preventDefault();
+      last.focus();
+    } else if (!evt.shiftKey && document.activeElement === last) {
+      evt.preventDefault();
+      first.focus();
+    }
+  };
+
+  menuToggle.addEventListener("click", () => {
+    const isOpen = document.body.classList.contains("menu-open");
+    setState(!isOpen);
+  });
+
+  overlay.addEventListener("click", () => setState(false));
+
+  menu.addEventListener("click", (evt) => {
+    const link = evt.target.closest("a, button");
+    if (link) {
+      setState(false, false);
+    }
+  });
+
+  document.addEventListener("keydown", (evt) => {
+    if (evt.key === "Escape" && document.body.classList.contains("menu-open")) {
+      setState(false);
+    }
+    trapFocus(evt);
+  });
+
+  window.matchMedia("(min-width: 768px)").addEventListener("change", (e) => {
+    if (e.matches) setState(false, false);
   });
 }
 
@@ -428,4 +501,5 @@ document.addEventListener("DOMContentLoaded", () => {
   setYear();
   setLanguage(detectPreferredLanguage());
   initLangToggle();
+  initMobileMenu();
 });

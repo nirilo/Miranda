@@ -240,6 +240,7 @@ const resultIssues = document.getElementById("result-issues-list");
 const resultNotes = document.getElementById("result-notes");
 const resultTips = document.getElementById("result-tips");
 const langToggle = document.getElementById("lang-toggle");
+const mobileLangToggle = document.getElementById("mobile-lang-toggle");
 
 function t() {
   return translations[state.lang] || translations.en;
@@ -604,6 +605,11 @@ function applyStaticText() {
     ["nav-work", t().nav.work],
     ["nav-contact", t().nav.contact],
     ["nav-condition", t().nav.condition],
+    ["mobile-nav-home", t().nav.home],
+    ["mobile-nav-about", t().nav.about],
+    ["mobile-nav-work", t().nav.work],
+    ["mobile-nav-contact", t().nav.contact],
+    ["mobile-nav-condition", t().nav.condition],
     ["hero-tag", t().heroTag],
     ["hero-title", t().heroTitle],
     ["hero-lead", t().heroLead],
@@ -644,17 +650,21 @@ function applyStaticText() {
       .heroList.map((item) => `<li>${item}</li>`)
       .join("");
   if (langToggle) langToggle.textContent = t().nav.toggle;
+  if (mobileLangToggle) mobileLangToggle.textContent = t().nav.toggle;
   const footerNote = document.getElementById("footer-note");
   if (footerNote) footerNote.innerHTML = t().footer.note;
 }
 
 function setUpNavigation() {
-  if (langToggle) {
-    langToggle.addEventListener("click", () => {
+  const toggles = Array.from(
+    document.querySelectorAll("#lang-toggle, #mobile-lang-toggle")
+  );
+  toggles.forEach((btn) => {
+    btn.addEventListener("click", () => {
       const nextLang = state.lang === "en" ? "el" : "en";
       setLanguage(nextLang);
     });
-  }
+  });
 
   backBtn.addEventListener("click", () => {
     state.current = Math.max(0, state.current - 1);
@@ -672,9 +682,74 @@ function setUpNavigation() {
   });
 }
 
+function initMobileMenu() {
+  const menuToggle = document.getElementById("menu-toggle");
+  const overlay = document.getElementById("menu-overlay");
+  const menu = document.getElementById("mobile-menu");
+  if (!menuToggle || !overlay || !menu) return;
+
+  const focusableSelector = "a, button";
+  const getFocusable = () =>
+    Array.from(menu.querySelectorAll(focusableSelector)).filter((el) => !el.disabled);
+
+  const setState = (isOpen, returnFocus = true) => {
+    document.body.classList.toggle("menu-open", isOpen);
+    overlay.hidden = !isOpen;
+    menu.hidden = !isOpen;
+    menuToggle.setAttribute("aria-expanded", String(isOpen));
+    if (isOpen) {
+      const first = getFocusable()[0];
+      if (first) first.focus();
+    } else if (returnFocus) {
+      menuToggle.focus();
+    }
+  };
+
+  const trapFocus = (evt) => {
+    if (!document.body.classList.contains("menu-open") || evt.key !== "Tab") return;
+    const focusable = getFocusable();
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (evt.shiftKey && document.activeElement === first) {
+      evt.preventDefault();
+      last.focus();
+    } else if (!evt.shiftKey && document.activeElement === last) {
+      evt.preventDefault();
+      first.focus();
+    }
+  };
+
+  menuToggle.addEventListener("click", () => {
+    const isOpen = document.body.classList.contains("menu-open");
+    setState(!isOpen);
+  });
+
+  overlay.addEventListener("click", () => setState(false));
+
+  menu.addEventListener("click", (evt) => {
+    const link = evt.target.closest("a, button");
+    if (link) {
+      setState(false, false);
+    }
+  });
+
+  document.addEventListener("keydown", (evt) => {
+    if (evt.key === "Escape" && document.body.classList.contains("menu-open")) {
+      setState(false);
+    }
+    trapFocus(evt);
+  });
+
+  window.matchMedia("(min-width: 768px)").addEventListener("change", (e) => {
+    if (e.matches) setState(false, false);
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   state.lang = detectPreferredLanguage();
   setLanguage(state.lang);
   setUpNavigation();
   setYear();
+  initMobileMenu();
 });
