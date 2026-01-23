@@ -180,7 +180,8 @@ const LANG_STORAGE_KEY = "miranda-lang";
 
 let currentLang = "el";
 let thumbButtons = [];
-let beforeImg, afterImg, titleEl, noteEl, beforeLabelEl, afterLabelEl;
+let beforeImg, afterImg, titleEl, noteEl, beforeLabelEl, afterLabelEl, galleryStage, progressBar;
+let activeIndex = 0;
 let fileNoteEl;
 let fileInputEl;
 
@@ -225,30 +226,142 @@ function renderCards(lang) {
   });
 }
 
-function setGalleryActive(index) {
-  const item = galleryItems[index] || galleryItems[0];
-  const t = translations[currentLang];
+const imageCache = new Map();
 
-  if (beforeImg) {
-    beforeImg.src = item.before;
-    beforeImg.alt = `${item.title[currentLang]} — ${t.beforeLabel.toLowerCase()}`;
+function preloadImage(src) {
+  if (!src) return Promise.resolve();
+  if (imageCache.has(src)) return imageCache.get(src);
+  const promise = new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      if (img.decode) {
+        img.decode().then(resolve).catch(resolve);
+      } else {
+        resolve();
+      }
+    };
+    img.onerror = resolve;
+    img.src = src;
+  });
+  imageCache.set(src, promise);
+  return promise;
+}
+
+function warmNextImagePair(index) {
+  if (!galleryItems.length) return;
+  const nextIndex = (index + 1) % galleryItems.length;
+  const nextItem = galleryItems[nextIndex];
+  if (!nextItem) return;
+  [nextItem.before, nextItem.after].forEach(preloadImage);
+}
+
+function updateProgressBar(index) {
+  if (!progressBar || !galleryItems.length) return;
+  const percentage = ((index + 1) / galleryItems.length) * 100;
+  progressBar.style.setProperty("--progress", `${percentage}%`);
+  progressBar.style.width = `${percentage}%`;
+}
+
+function setStageLoading(isLoading) {
+  if (!galleryStage) return;
+  galleryStage.classList.toggle("is-loading", isLoading);
+  galleryStage.setAttribute("aria-busy", String(isLoading));
+}
+
+function attachSwipeNavigation(element, onSwipe) {
+  if (!element || typeof onSwipe !== "function") return;
+  let startX = 0;
+  let startY = 0;
+  let tracking = false;
+
+  element.addEventListener(
+    "pointerdown",
+    (evt) => {
+      // Only handle touch interactions for swipe
+      if (evt.pointerType && evt.pointerType !== "touch") return;
+      tracking = true;
+      startX = evt.clientX;
+      startY = evt.clientY;
+    },
+    { passive: true }
+  );
+
+  element.addEventListener(
+    "pointermove",
+    (evt) => {
+      if (!tracking) return;
+      const dx = evt.clientX - startX;
+      const dy = evt.clientY - startY;
+      // Ignore mostly vertical scrolls
+      if (Math.abs(dy) > Math.abs(dx)) return;
+      if (Math.abs(dx) > 40) {
+        onSwipe(dx > 0 ? -1 : 1);
+        tracking = false;
+      }
+    },
+    { passive: true }
+  );
+
+  ["pointerup", "pointercancel", "pointerleave"].forEach((type) => {
+    element.addEventListener(
+      type,
+      () => {
+        tracking = false;
+      },
+      { passive: true }
+    );
+  });
+}
+
+async function setGalleryActive(index) {
+  const safeIndex = ((index % galleryItems.length) + galleryItems.length) % galleryItems.length;
+  const item = galleryItems[safeIndex] || galleryItems[0];
+  const t = translations[currentLang];
+  activeIndex = safeIndex;
+
+  setStageLoading(true);
+  [beforeImg, afterImg].forEach((img) => img?.classList.remove("is-loaded"));
+
+  const beforeAlt = `${item.title[currentLang]} - ${t.beforeLabel.toLowerCase()}`;
+  const afterAlt = `${item.title[currentLang]} - ${t.afterLabel.toLowerCase()}`;
+
+  try {
+    await Promise.all([preloadImage(item.before), preloadImage(item.after)]);
+
+    if (beforeImg) {
+      beforeImg.src = item.before;
+      beforeImg.alt = beforeAlt;
+      requestAnimationFrame(() => beforeImg.classList.add("is-loaded"));
+    }
+    if (afterImg) {
+      afterImg.src = item.after;
+      afterImg.alt = afterAlt;
+      requestAnimationFrame(() => afterImg.classList.add("is-loaded"));
+    }
+  } finally {
+    setStageLoading(false);
   }
-  if (afterImg) {
-    afterImg.src = item.after;
-    afterImg.alt = `${item.title[currentLang]} — ${t.afterLabel.toLowerCase()}`;
-  }
+
   if (titleEl) titleEl.textContent = item.title[currentLang];
   if (noteEl) noteEl.textContent = item.note[currentLang];
   if (beforeLabelEl) beforeLabelEl.textContent = t.beforeLabel;
   if (afterLabelEl) afterLabelEl.textContent = t.afterLabel;
 
   thumbButtons.forEach((btn, i) => {
-    const isActive = i === index;
+    const isActive = i === safeIndex;
     btn.classList.toggle("active", isActive);
     btn.setAttribute("aria-pressed", String(isActive));
-    btn.setAttribute("aria-label", item.aria[currentLang]);
+    const thumbItem = galleryItems[i];
+    if (thumbItem?.aria?.[currentLang]) {
+      btn.setAttribute("aria-label", thumbItem.aria[currentLang]);
+    }
   });
+
+  updateProgressBar(safeIndex);
+  warmNextImagePair(safeIndex);
 }
+
+
 
 function initGallery() {
   beforeImg = document.getElementById("before-img");
@@ -257,13 +370,36 @@ function initGallery() {
   noteEl = document.getElementById("work-note");
   beforeLabelEl = document.getElementById("before-label");
   afterLabelEl = document.getElementById("after-label");
+  galleryStage = document.querySelector(".ba");
+  progressBar = document.querySelector(".ba-progress-bar");
+  const prevBtn = document.getElementById("ba-prev");
+  const nextBtn = document.getElementById("ba-next");
   thumbButtons = Array.from(document.querySelectorAll(".thumb"));
+
+  const goTo = (delta) => setGalleryActive(activeIndex + delta);
 
   thumbButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       setGalleryActive(Number(btn.dataset.index) || 0);
     });
   });
+
+  if (prevBtn) prevBtn.addEventListener("click", () => goTo(-1));
+  if (nextBtn) nextBtn.addEventListener("click", () => goTo(1));
+
+  if (galleryStage) {
+    attachSwipeNavigation(galleryStage, goTo);
+    galleryStage.addEventListener("keydown", (evt) => {
+      if (evt.key === "ArrowRight") {
+        evt.preventDefault();
+        goTo(1);
+      } else if (evt.key === "ArrowLeft") {
+        evt.preventDefault();
+        goTo(-1);
+      }
+    });
+  }
+
   setGalleryActive(0);
 }
 
