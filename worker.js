@@ -590,3 +590,50 @@ function looksLikeEmail(value) {
   const s = String(value || "").trim();
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 }
+
+
+// //todo fake rate limiter : better version later (deliver protection for kv etc)
+// const rateMap = new Map();
+
+// function getClientIp(request) {
+//   const cfIp = request.headers.get("cf-connecting-ip");
+//   if (cfIp) return cfIp;
+
+//   const xff = request.headers.get("x-forwarded-for");
+//   if (xff) return xff.split(",")[0].trim();
+
+//   return "anon";
+// }
+
+// function rateLimit(request) {
+//   const now = Date.now();
+//   const WINDOW_MS = 60_000;
+//   const LIMIT = 20;
+
+//   const key = getClientIp(request);
+//   const bucket = rateMap.get(key) || [];
+
+//   // keep only timestamps within window
+//   const recent = bucket.filter(ts => now - ts < WINDOW_MS);
+
+//   if (recent.length >= LIMIT) {
+//     rateMap.set(key, recent);
+//     const oldest = recent[0];
+//     const retryAfterMs = WINDOW_MS - (now - oldest);
+//     return { ok: false, retryAfterSec: Math.ceil(retryAfterMs / 1000) };
+//   }
+
+//   recent.push(now);
+//   rateMap.set(key, recent);
+
+//   // tiny opportunistic cleanup (optional)
+//   if (rateMap.size > 5000 && Math.random() < 0.01) {
+//     for (const [k, arr] of rateMap.entries()) {
+//       const pruned = arr.filter(ts => now - ts < WINDOW_MS);
+//       if (pruned.length === 0) rateMap.delete(k);
+//       else rateMap.set(k, pruned);
+//     }
+//   }
+
+//   return { ok: true };
+// }

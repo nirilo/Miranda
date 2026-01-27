@@ -102,13 +102,13 @@
 
         <div class="gallery-wrap paper torn">
           <div class="gallery-grid">
-            <div class="ba">
-              <figure class="frame polaroid">
-                <img id="before-img" src="assets/images/denim_before.webp" alt="Denim repair — before">
+            <div class="ba" aria-live="polite" aria-label="Before and after gallery" tabindex="0">
+              <figure class="frame polaroid ba-card">
+                <img id="before-img" src="assets/images/denim_before.webp" alt="Denim repair - before" loading="lazy" decoding="async" fetchpriority="high">
                 <figcaption id="before-label">Before</figcaption>
               </figure>
-              <figure class="frame polaroid">
-                <img id="after-img" src="assets/images/denim_after.webp" alt="Denim repair — after">
+              <figure class="frame polaroid ba-card">
+                <img id="after-img" src="assets/images/denim_after.webp" alt="Denim repair - after" loading="lazy" decoding="async">
                 <figcaption id="after-label">After</figcaption>
               </figure>
             </div>
@@ -121,6 +121,13 @@
                 <li><button class="thumb" data-index="1" aria-label="Show evening dress hem"><img src="assets/images/dress_after.webp" alt=""></button></li>
                 <li><button class="thumb" data-index="2" aria-label="Show curtain resizing"><img src="assets/images/curtain_after.webp" alt=""></button></li>
               </ul>
+              <div class="ba-controls" aria-label="Slideshow controls">
+                <button type="button" class="ba-nav" id="ba-prev" aria-label="Previous example"><span aria-hidden="true">‹</span></button>
+                <div class="ba-progress" aria-hidden="true">
+                  <span class="ba-progress-bar"></span>
+                </div>
+                <button type="button" class="ba-nav" id="ba-next" aria-label="Next example"><span aria-hidden="true">›</span></button>
+              </div>
             </aside>
           </div>
         </div>
